@@ -1,0 +1,55 @@
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>Статистика</title>
+    <style type="text/css">
+        table {
+            border-collapse: collapse;
+        }
+
+        table td, table th {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+
+<p>${date1} — ${date2}</p>
+
+<p>Всего получено писем: ${countReceived}<br/>
+Удалено: ${countCanceled}<br/>
+
+<table>
+    <tbody>
+        <tr for="java.util.Map.Entry entry : sentByCategories">
+                <td>Отвечено «${entry.key}»:</td>
+                <td>${entry.value}</td>
+        </tr>
+    </tbody>
+</table>
+
+<br>
+
+<table>
+    <thead>
+    <tr>
+        <th>Имя</th>
+        <th>Email</th>
+        <th>Тема</th>
+        <th>Время</th>
+        <th>Прокси</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr for="ru.mailhandler.model.SentMessage sentMessage : sentMessages">
+        <td>${sentMessage.name}</td>
+        <td>${sentMessage.email}</td>
+        <td>${sentMessage.subject}</td>
+        <td>${sentMessage.formattedSentTime}</td>
+        <td>${sentMessage.proxy}</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>

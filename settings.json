@@ -1,0 +1,106 @@
+{
+  "FETCH_EMAIL_INTERVAL": 60000,
+  "POP3_EMAIL_LOGIN": "stas.agarkov@gmail.com",
+  "POP3_EMAIL_PASSWORD": "Ginger12345$",
+  "POP3_HOST": "pop.gmail.com",
+  "POP3_PORT": 995,
+  "POP3_MAILBOX_CONNECTION_TIMEOUT": 20000,
+  "SMTP_EMAIL_LOGIN": "stas.agarkov@gmail.com",
+  "SMTP_EMAIL_PASSWORD": "Ginger12345$",
+  "SMTP_HOST": "smtp.gmail.com",
+  "SMTP_PORT": 465,
+  "SMTP_SSL": true,
+  "SMTP_MAILBOX_CONNECTION_TIMEOUT": 20000,
+  "SENDER_FROM": "",
+  "RESPONSE_TIME_FILTER": true,
+  "MIN_RESPONSE_INTERVAL": 86414000,
+  "MIN_RESPONSE_INTERVAL_FIRST": 8,
+  "MIN_RESPONSE_INTERVAL_LAST": 6,
+  "DELETE_BY_SUBJECT_AND_FROM_FILTER": false,
+  "DELETE_BY_SUBJECT_AND_FROM_FILTER_TAGS": [
+    "spam"
+  ],
+  "ANTI_DELETE_BY_SUBJECT_AND_FROM_FILTER": false,
+  "ANTI_DELETE_BY_SUBJECT_AND_FROM_FILTER_TAGS": [
+    "agarkov"
+  ],
+  "FOLDERS": [
+    {
+      "title": "TAXI",
+      "tags": [
+        "TAXI",
+        "TX"
+      ],
+      "emptySubject": false,
+      "isDefault": false
+    },
+    {
+      "title": "Customer Service",
+      "tags": [
+        "custom service",
+        "customer service",
+        "client service"
+      ],
+      "emptySubject": false,
+      "isDefault": false
+    },
+    {
+      "title": "Новая категория",
+      "tags": [],
+      "emptySubject": false,
+      "isDefault": false
+    },
+    {
+      "title": "Customer",
+      "tags": [
+        "Customer",
+        "call",
+        "consumer",
+        "customer",
+        "csr"
+      ],
+      "emptySubject": false,
+      "isDefault": true
+    }
+  ],
+  "SENDING_DELAY": 15000,
+  "EMAIL_FOR_RESPONSE_FINDER_FILENAME_TAGS": [
+    "cover",
+    "resume"
+  ],
+  "EMAIL_FOR_RESPONSE_FINDER_EXTENSIONS": [
+    "txt",
+    "pdf",
+    "docx",
+    "doc",
+    "xls",
+    "xlsx",
+    "rtf",
+    "htm",
+    "html"
+  ],
+  "PROXY_TTL": 86400000,
+  "PROXY_PANEL_USER": "User0347363",
+  "PROXY_PANEL_PASS": "htbyRchgbtS4",
+  "PROXY_PANEL_URLS": [
+    "http://admin.5socks.net/cgi-bin/online.cgi?s_city\u003d\u0026s_country\u003dColombia\u0026s_state\u003d\u0026s_host\u003d%2Acable.%2A\u0026s_ip\u003d\u0026search\u003d1",
+    "http://admin.5socks.net/cgi-bin/online.cgi?s_city\u003d\u0026s_country\u003dMexico\u0026s_state\u003d\u0026s_host\u003d%2Ainfinitum.%2A\u0026s_ip\u003d\u0026search\u003d1"
+  ],
+  "MAX_COUNT_PROXY_TODAY": 15,
+  "ADMIN_EMAIL": "stas.agarkov@gmail.com",
+  "MESSAGE_TEMPLATE": "%Cursor\n\n%PRIORITY\u003d\"L\"Dear %OFromFName, %ODateEn, %OTimeLongEn, you wrote:\n%Quotes",
+  "PROXY_MAX_ERROR_COUNT": 3,
+  "TIMEOUT_BETWEEN_MESSAGE_SEND": 15000,
+  "ONCE_MESSAGE_COUNT": 20,
+  "DISABLE_EMAIL_SEARCH_IN_FROM": false,
+  "DISABLE_EMAIL_SEARCH_IN_BODY": false,
+  "DISABLE_EMAIL_SEARCH_IN_ATTACHMENTS": false,
+  "TODAY_CLOCK": 84600000,
+  "SOCKS_THRESHOLD": 20,
+  "SPEED": 2000,
+  "REPEATED_SUBJECT": "123456789",
+  "LOG_FONT_NAME": "SansSerif",
+  "SENDER_NAME": "Администратор",
+  "LOCALE": "английский (Австралия)",
+  "REPLY_TO": ""
+}

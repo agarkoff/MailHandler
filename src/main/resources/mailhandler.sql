@@ -1,0 +1,37 @@
+CREATE TABLE IF NOT EXISTS [response_time] (
+[email] VARCHAR(250) PRIMARY KEY,
+[time] INTEGER NOT NULL
+)
+$$$
+CREATE TABLE IF NOT EXISTS [scheduled_message] (
+[id] INTEGER PRIMARY KEY,
+[name] VARCHAR(250) NOT NULL,
+[to] VARCHAR(250) NOT NULL,
+[subject] VARCHAR(250) NOT NULL,
+[body] VARCHAR(250) NOT NULL,
+[attachment_filenames] VARCHAR(100),
+[folder_name] VARCHAR(100),
+[sending_time] INTEGER NOT NULL,
+[priority] INTEGER NOT NULL
+)
+$$$
+CREATE TABLE IF NOT EXISTS [proxy] (
+[id] INTEGER PRIMARY KEY,
+[host] VARCHAR(250) NOT NULL,
+[port] INTEGER NOT NULL,
+[download_time] INTEGER NOT NULL,
+[error_count] INTEGER NOT NULL DEFAULT 0
+)
+$$$
+CREATE TABLE IF NOT EXISTS [sent_message] (
+[id] INTEGER PRIMARY KEY,
+[name] VARCHAR(250) NOT NULL,
+[email] VARCHAR(250) NOT NULL,
+[subject] VARCHAR(1000) NOT NULL,
+[proxy] VARCHAR(100) NOT NULL,
+[sent_time] INTEGER NOT NULL
+)
+$$$
+CREATE TABLE IF NOT EXISTS [seen_message] (
+[uid] VARCHAR(100) UNIQUE
+)

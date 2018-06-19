@@ -1,0 +1,27 @@
+{
+  "countReceivedEmailByHour": 3,
+  "countSentEmailByHour": 1,
+  "countReceivedEmailToday": 6,
+  "countSentEmailToday": 5,
+  "undeliveredToday": 0,
+  "usedProxyToday": 0,
+  "countDownloadedProxyToday": 0,
+  "categoryStats": {
+    "Customer": {
+      "folderName": "Customer",
+      "countByHour": 3,
+      "countByToday": 6
+    },
+    "Customer Service": {
+      "folderName": "Customer Service",
+      "countByHour": 0,
+      "countByToday": 0
+    },
+    "TAXI": {
+      "folderName": "TAXI",
+      "countByHour": 0,
+      "countByToday": 0
+    }
+  },
+  "lastTimeResetHourStats": 1529409602914
+}
