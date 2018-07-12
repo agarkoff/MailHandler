@@ -1,16 +1,16 @@
 {
-  "countReceivedEmailByHour": 3,
-  "countSentEmailByHour": 1,
-  "countReceivedEmailToday": 6,
-  "countSentEmailToday": 5,
+  "countReceivedEmailByHour": 2,
+  "countSentEmailByHour": 3,
+  "countReceivedEmailToday": 18,
+  "countSentEmailToday": 16,
   "undeliveredToday": 0,
   "usedProxyToday": 0,
   "countDownloadedProxyToday": 0,
   "categoryStats": {
     "Customer": {
       "folderName": "Customer",
-      "countByHour": 3,
-      "countByToday": 6
+      "countByHour": 2,
+      "countByToday": 18
     },
     "Customer Service": {
       "folderName": "Customer Service",
@@ -23,5 +23,5 @@
       "countByToday": 0
     }
   },
-  "lastTimeResetHourStats": 1529409602914
+  "lastTimeResetHourStats": 1531382506112
 }

@@ -6,7 +6,7 @@
     <groupId>ru.misterparser.mailhandler</groupId>
     <name>MailHandler</name>
     <artifactId>MailHandler</artifactId>
-    <version>1.0.21</version>
+    <version>1.0.23</version>
     <packaging>jar</packaging>
 
     <properties>
@@ -17,9 +17,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.16.20</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.10.0</version>
+            <version>2.11.0</version>
         </dependency>
         <dependency>
             <groupId>javax.mail</groupId>
@@ -102,10 +108,6 @@
             <artifactId>MisterParserCommon</artifactId>
             <version>1.2.1</version>
             <exclusions>
-                <exclusion>
-                    <groupId>org.apache.poi</groupId>
-                    <artifactId>poi-ooxml</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>com.thoughtworks.xstream</groupId>
                     <artifactId>xstream</artifactId>
@@ -212,7 +214,7 @@
                                         <exclude name="parser.properties"/>
                                     </fileset>
                                 </delete>
-                                <copy file="D:\Projects\7zipsfx-launch-java-example-pack\dist-jdk8-x86\start.exe" tofile="exe\${project.name}.exe" overwrite="false"/>
+                                <copy file="D:\Projects\7zipsfx-launch-java-example-pack\dist-jdk8-x86-nolimit\start.exe" tofile="exe\${project.name}.exe" overwrite="false"/>
                             </target>
                         </configuration>
                         <goals>

@@ -8,6 +8,12 @@ import org.apache.commons.lang.WordUtils;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFFont;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.sqlite.date.DateFormatUtils;
 import ru.mailhandler.*;
 import ru.mailhandler.db.Database;
@@ -15,6 +21,7 @@ import ru.mailhandler.filter.AntiDeleteBySubjectAndFromFilter;
 import ru.mailhandler.filter.DeleteBySubjectAndFromFilter;
 import ru.mailhandler.filter.OneAddressFilter;
 import ru.mailhandler.filter.ResponseTimeFilter;
+import ru.mailhandler.model.ResumeData;
 import ru.mailhandler.model.ScheduledMessage;
 import ru.mailhandler.model.SentMessage;
 import ru.mailhandler.settings.Folder;
@@ -26,8 +33,10 @@ import ru.misterparser.common.configuration.ConfigurationUtils;
 import ru.misterparser.common.flow.ThreadFinishStatus;
 import ru.misterparser.common.mail.EmailUtils;
 
+import javax.activation.DataHandler;
 import javax.mail.*;
 import javax.mail.internet.*;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -46,6 +55,8 @@ public class Main extends ControlledRunnable {
 
     private long lastTimeFetch;
     private long lastTimeSendAdminStats;
+
+    private List<ResumeData> resumeDataList = new ArrayList<>();
 
     public Main() {
     }
@@ -118,7 +129,11 @@ public class Main extends ControlledRunnable {
                                                 String from = MimeUtility.decodeText(message.getFrom()[0].toString());
                                                 if (folder != null) {
                                                     String formOfAddress = getFormOfAddress(message);
-                                                    scheduleMail(message, folder, formOfAddress);
+                                                    ResumeData resumeData = Helpers.getResumeData(message);
+                                                    if (resumeData.isNotBlank()) {
+                                                        resumeDataList.add(resumeData);
+                                                    }
+                                                    scheduleMail(message, folder, formOfAddress, resumeData.getLocation());
                                                     Stats.get().incCategoryStats(folder.getTitle());
                                                 } else {
                                                     log.debug("Message " + message.getSubject() + " from " + from + " decline by folder not found");
@@ -321,17 +336,77 @@ public class Main extends ControlledRunnable {
             mimeMessage.setSubject("Statistics Handler from " + Helpers.formatDate(fetchEmailIntervalStats.getDate1().getTime()) + " to " + Helpers.formatDate(fetchEmailIntervalStats.getDate2().getTime()), "UTF-8");
 
             Multipart multipart = new MimeMultipart();
-            MimeBodyPart messageBodyPart = new MimeBodyPart();
-            messageBodyPart.setContent(body, "text/html; charset=utf-8");
-            multipart.addBodyPart(messageBodyPart);
+            {
+                MimeBodyPart messageBodyPart = new MimeBodyPart();
+                messageBodyPart.setContent(body, "text/html; charset=utf-8");
+                multipart.addBodyPart(messageBodyPart);
+            }
+            {
+                MimeBodyPart messageBodyPart = new MimeBodyPart();
+                messageBodyPart.setDataHandler(new DataHandler(getXlsxByteArray(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+                messageBodyPart.setFileName("resumeDataList.xlsx");
+                multipart.addBodyPart(messageBodyPart);
+            }
             mimeMessage.setContent(multipart);
 
             Transport.send(mimeMessage);
             log.debug("Admin stats sent");
+            resumeDataList.clear();
         } catch (Throwable t) {
             log.debug("Throwable", t);
         } finally {
             CustomProxySelector.setNoProxy(false);
+        }
+    }
+
+    private Object getXlsxByteArray() {
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Workbook workbook = new XSSFWorkbook();
+            Sheet sheet = workbook.createSheet("Лист1");
+            int rowIndex = 0;
+            List<ResumeData> list = new ArrayList<>(resumeDataList);
+            list.add(0, new ResumeData("First name", "Last name", "Email", "Phone", "Location"));
+            for (ResumeData resumeData : list) {
+                Row row = sheet.createRow(rowIndex++);
+                {
+                    Cell cell = row.getCell(0, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    cell.setCellValue(resumeData.getFirstName());
+                }
+                {
+                    Cell cell = row.getCell(1, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    cell.setCellValue(resumeData.getLastName());
+                }
+                {
+                    Cell cell = row.getCell(2, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    cell.setCellValue(resumeData.getLocation());
+                }
+                {
+                    Cell cell = row.getCell(3, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    cell.setCellValue(resumeData.getEmail());
+                }
+                {
+                    Cell cell = row.getCell(4, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
+                    cell.setCellValue(resumeData.getPhone());
+                }
+            }
+            Row row0 = sheet.getRow(0);
+            Cell cell = row0.getCell(0);
+            XSSFFont original = ((XSSFWorkbook) workbook).getFontAt(cell.getCellStyle().getFontIndex());
+            XSSFFont font = (XSSFFont) workbook.createFont();
+            font.setFontHeightInPoints(original.getFontHeightInPoints());
+            font.setFontName(original.getFontName());
+            font.setColor(original.getColor());
+            font.setBold(true);
+            font.setItalic(original.getItalic());
+            for (Cell c : row0) {
+                c.getCellStyle().setFont(font);
+            }
+            workbook.write(out);
+            return out.toByteArray();
+        } catch (Exception e) {
+            log.debug("Exception", e);
+            return null;
         }
     }
 
@@ -348,7 +423,7 @@ public class Main extends ControlledRunnable {
         return false;
     }
 
-    private void scheduleMail(Message message, Folder folder, String formOfAddress) throws IOException, MessagingException {
+    private void scheduleMail(Message message, Folder folder, String formOfAddress, String location) throws IOException, MessagingException {
         String to = EmailForResponseFinder.get().getEmail(message);
         if (to == null) {
             log.debug("Email sender not found. The message will not be sent.");
@@ -392,6 +467,7 @@ public class Main extends ControlledRunnable {
         }
         String join = StringUtils.join(bodyLines, "\n");
         body = templateManager.format(Settings.get().MESSAGE_TEMPLATE, formOfAddress, sentDate, textFromMessage, join);
+        body = StringUtils.replace(body, "your location", location);
 
         //body = body.replace("\n", "\n<br/>");
         //body = body.replace("\r", "");

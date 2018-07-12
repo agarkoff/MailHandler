@@ -1,9 +1,16 @@
 package ru.mailhandler;
 
+import org.apache.commons.collections4.set.ListOrderedSet;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.pdfbox.cos.COSDocument;
+import org.apache.pdfbox.io.RandomAccessBuffer;
+import org.apache.pdfbox.pdfparser.PDFParser;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
@@ -12,26 +19,25 @@ import org.apache.tika.mime.MediaType;
 import org.javatuples.Pair;
 import org.sqlite.date.DateFormatUtils;
 import ru.mailhandler.db.Database;
-import ru.mailhandler.stat.Stats;
+import ru.mailhandler.model.Attachment;
 import ru.mailhandler.model.Proxy;
+import ru.mailhandler.model.ResumeData;
 import ru.mailhandler.settings.Settings;
+import ru.mailhandler.stat.Stats;
 
 import javax.mail.*;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeMessage;
-import javax.mail.internet.MimeMultipart;
+import javax.mail.internet.*;
 import javax.swing.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import java.text.DateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -45,6 +51,21 @@ public class Helpers {
 
     public static String formatDate(Long time) {
         return DateFormatUtils.format(time, "yyyy-MM-dd HH:mm:ss");
+    }
+
+    private static TreeSet<String> cityNames = new TreeSet<>();
+
+    static {
+        try {
+            List<String> strings = IOUtils.readLines(Helpers.class.getClassLoader().getResourceAsStream("cityNames.csv"), StandardCharsets.UTF_8);
+            for (String s : strings) {
+                s = StringUtils.lowerCase(s);
+                cityNames.add(s);
+            }
+        } catch (Exception e) {
+            log.debug("Exception", e);
+        }
+        log.debug("Loaded city names: " + cityNames.size());
     }
 
     public static String getMimeType(String filename) {
@@ -201,7 +222,7 @@ public class Helpers {
     public static Date parseDate(String string) {
         Date date = null;
         try {
-            return DateUtils.parseDate(string, new String[] {"dd.MM.yyyy HH:mm"});
+            return DateUtils.parseDate(string, new String[]{"dd.MM.yyyy HH:mm", "yyyy-MM-dd HH:mm:ss"});
         } catch (Throwable t) {
             log.debug("Throwable", t);
         }
@@ -223,5 +244,116 @@ public class Helpers {
         String dateFormatted = DateFormat.getDateInstance(DateFormat.LONG).format(date);
         String timeFormatted = DateFormat.getTimeInstance(DateFormat.DEFAULT).format(date);
         localePreviewLabel.setText(dateFormatted + " " + timeFormatted);
+    }
+
+    public static List<Attachment> getAttachments(Message message) throws IOException, MessagingException {
+        List<Attachment> attachments = new ArrayList<>();
+        if (message.getContent() instanceof Multipart) {
+            Multipart multipart = (Multipart) message.getContent();
+            for (int i = 0; i < multipart.getCount(); i++) {
+                BodyPart bodyPart = multipart.getBodyPart(i);
+                if (!Part.ATTACHMENT.equalsIgnoreCase(bodyPart.getDisposition()) &&
+                        !StringUtils.isNotBlank(bodyPart.getFileName())) {
+                    continue; // dealing with attachments only
+                }
+                {
+                    boolean f = false;
+                    for (String ext: Settings.get().EMAIL_FOR_RESPONSE_FINDER_EXTENSIONS) {
+                        if (StringUtils.endsWithIgnoreCase(bodyPart.getFileName(), ext)) {
+                            f = true;
+                            break;
+                        }
+                    }
+                    if (!f) {
+                        log.debug("Skip unknown filename extension in " + bodyPart.getFileName());
+                        continue;
+                    }
+                }
+                InputStream is = bodyPart.getInputStream();
+                Attachment attachment = new Attachment();
+                attachment.setFilename(MimeUtility.decodeText(bodyPart.getFileName()));
+                attachment.setData(IOUtils.toByteArray(is));
+                attachments.add(attachment);
+            }
+        }
+        return attachments;
+    }
+
+    public static ResumeData getResumeData(Message message) {
+        ResumeData resumeData = new ResumeData();
+        try {
+            for (Attachment attachment: getAttachments(message)) {
+                if (attachment.getFilename() != null &&
+                        StringUtils.endsWithIgnoreCase(attachment.getFilename(), "pdf")) {
+                    log.debug("Search resume data in attachment: " + attachment.getFilename());
+                    PDFParser parser = new PDFParser(new RandomAccessBuffer(attachment.getData()));
+                    parser.parse();
+                    String author = parser.getPDDocument().getDocumentInformation().getAuthor();
+                    String creator = parser.getPDDocument().getDocumentInformation().getCreator();
+                    String producer = parser.getPDDocument().getDocumentInformation().getProducer();
+                    String title = parser.getPDDocument().getDocumentInformation().getTitle();
+                    String keywords = parser.getPDDocument().getDocumentInformation().getKeywords();
+                    if (StringUtils.containsIgnoreCase(author, "Indeed") ||
+                            StringUtils.containsIgnoreCase(creator, "Indeed") ||
+                            StringUtils.containsIgnoreCase(producer, "Indeed") ||
+                            StringUtils.containsIgnoreCase(title, "Indeed") ||
+                            StringUtils.containsIgnoreCase(keywords, "Indeed")) {
+                        log.debug("Process " + attachment.getFilename() + " Indeed resume...");
+                        COSDocument cosDocument = parser.getDocument();
+                        PDFTextStripper pdfTextStripper = new PDFTextStripper();
+                        PDDocument pdDocument = new PDDocument(cosDocument);
+                        String parsedText = pdfTextStripper.getText(pdDocument);
+                        String[] ss = StringUtils.split(parsedText, "\n\r");
+                        if (ss == null || ss.length == 0) {
+                            continue;
+                        }
+                        {
+                            String t0 = ss[0];
+                            String[] tt = StringUtils.split(t0);
+                            if (tt != null && tt.length > 0) {
+                                resumeData.setFirstName(tt[0]);
+                            }
+                            if (tt != null && tt.length > 1) {
+                                resumeData.setLastName(tt[1]);
+                            }
+                        }
+                        int m = Math.min(ss.length, 10);
+                        for (int i = 1; i < m; i++) {
+                            String s = ss[i];
+                            ListOrderedSet<String> emails = new EmailExtractor().getEmails(s);
+                            if (emails.size() > 0) {
+                                String loc = ss[i-1];
+                                loc = StringUtils.substringBefore(loc, ", ");
+                                if (cityNames.contains(StringUtils.lowerCase(loc))) {
+                                    resumeData.setLocation(loc);
+                                }
+                                resumeData.setEmail(emails.get(0));
+                                for (String email : emails) {
+                                    s = StringUtils.replaceOnce(s, email, "");
+                                    s = StringUtils.strip(s, "- ");
+                                }
+                                if (StringUtils.isNotBlank(s)) {
+                                    resumeData.setPhone(s);
+                                }
+                                if (StringUtils.isBlank(resumeData.getPhone()) && i < m - 1) {
+                                    String t = ss[i + 1];
+                                    if (t.matches("[0-9-\\(\\) ]+")) {
+                                        resumeData.setPhone(StringUtils.trim(t));
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Exception", e);
+        }
+        if (StringUtils.isBlank(resumeData.getEmail())) {
+            log.debug("Failed to extract address from message");
+        }
+        log.debug("Found usefull resume data: " + resumeData);
+        return resumeData;
     }
 }

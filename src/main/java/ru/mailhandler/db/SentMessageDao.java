@@ -24,7 +24,6 @@ public class SentMessageDao {
 
     private Dao<SentMessage, Long> sentMessageDao;
 
-
     public SentMessageDao(ConnectionSource connectionSource) throws SQLException {
         sentMessageDao = DaoManager.createDao(connectionSource, SentMessage.class);
     }
