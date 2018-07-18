@@ -94,7 +94,7 @@ public class StatsController {
         if (delay < 0) {
             delay += DateUtils.MILLIS_PER_DAY;
         }
-        log.debug("Next reset today stats дневной статистики in ~" + delay / DateUtils.MILLIS_PER_HOUR + " ч " + delay % DateUtils.MILLIS_PER_HOUR / DateUtils.MILLIS_PER_MINUTE + " м");
+        log.debug("Next reset today stats in ~" + delay / DateUtils.MILLIS_PER_HOUR + " ч " + delay % DateUtils.MILLIS_PER_HOUR / DateUtils.MILLIS_PER_MINUTE + " м");
         timer.schedule(todayCleaner, delay, DateUtils.MILLIS_PER_DAY);
     }
 }
