@@ -223,8 +223,7 @@ public class Helpers {
         Date date = null;
         try {
             return DateUtils.parseDate(string, new String[]{"dd.MM.yyyy HH:mm", "yyyy-MM-dd HH:mm:ss"});
-        } catch (Throwable t) {
-            log.debug("Throwable", t);
+        } catch (Throwable ignored) {
         }
         return date;
     }
