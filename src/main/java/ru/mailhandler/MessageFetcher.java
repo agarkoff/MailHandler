@@ -39,14 +39,8 @@ public class MessageFetcher implements AutoCloseable {
         properties.setProperty("mail.pop3.port", String.valueOf(Settings.get().POP3_PORT));
         properties.setProperty("java.net.useSystemProxies", "true");
 
-        final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
-        //Security.addProvider(new com.sun.net.ssl.internal.ssl.Provider());
-        properties.setProperty("mail.pop3.socketFactory.class", SSL_FACTORY);
-//        properties.setProperty("mail.pop3.socketFactory.fallback", "false");
-
-        //Proxy proxy = SocksManager.get().nextProxy();
-        //System.setProperty("socksProxyHost", proxy.getHost());
-        //System.setProperty("socksProxyPort", String.valueOf(proxy.getPort()));
+        //final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
+        //properties.setProperty("mail.pop3.socketFactory.class", SSL_FACTORY);
 
         Session session = Session.getInstance(properties);
         store = (POP3Store) session.getStore("pop3");
